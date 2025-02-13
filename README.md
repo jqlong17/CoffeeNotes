@@ -84,6 +84,10 @@ src/
 │   └── utils.ts       # 通用工具函数
 ├── styles/            # 全局样式
 └── types/             # TypeScript 类型定义
+
+docs/
+└── dev-diary/         # 开发日记
+    └── 2025-02-14.md  # 按日期记录开发过程和问题解决
 ```
 
 ## 开发进度
@@ -118,7 +122,7 @@ src/
 - [ ] 社交功能
 - [ ] PWA 支持
 
-### 2024-02-23 部署上线
+### 2025-02-14 部署上线
 - [x] 修复 ESLint 错误
 - [x] 成功部署到 Vercel
 - [x] 项目可通过 https://coffee-notes.vercel.app 访问
