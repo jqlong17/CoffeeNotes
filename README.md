@@ -2,6 +2,12 @@
 
 一个面向咖啡爱好者的 H5 应用，提供咖啡资讯、实用工具和个性化学习体验。
 
+[![部署状态](https://therealsujitk-vercel-badge.vercel.app/?app=coffee-notes)](https://coffee-notes.vercel.app)
+
+## 在线预览
+
+访问 [https://coffee-notes.vercel.app](https://coffee-notes.vercel.app) 查看线上演示版本。
+
 ## 项目概述
 
 CoffeeNotes 是一个基于 Web 的咖啡爱好者平台，结合 AI 技术，为用户提供个性化的咖啡知识内容和实用工具。
