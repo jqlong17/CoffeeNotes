@@ -22,39 +22,20 @@ const features = [
   },
 ]
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="py-12">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-coffee-900 sm:text-6xl">
-          ☕ Coffee Notes
-        </h1>
-        <p className="mt-6 text-lg leading-8 text-coffee-600">
-          一个面向咖啡爱好者的应用，提供咖啡资讯、实用工具和个性化学习体验。
-        </p>
+    <div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-coffee-900">咖啡资讯</h1>
       </div>
-
-      <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-        <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-          {features.map((feature) => (
-            <Link
-              key={feature.name}
-              href={feature.href}
-              className="group relative flex flex-col rounded-2xl border border-coffee-200 bg-white p-6 hover:border-coffee-300 hover:shadow-lg"
-            >
-              <dt className="flex items-center gap-x-3 text-lg font-semibold leading-7 text-coffee-900">
-                <feature.icon
-                  className="h-5 w-5 flex-none text-coffee-600"
-                  aria-hidden="true"
-                />
-                {feature.name}
-              </dt>
-              <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-coffee-600">
-                <p className="flex-auto">{feature.description}</p>
-              </dd>
-            </Link>
-          ))}
-        </dl>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* 资讯卡片占位 */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="aspect-[3/4] animate-pulse rounded-2xl bg-white p-4"
+          />
+        ))}
       </div>
     </div>
   )

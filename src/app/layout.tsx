@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Nav } from "@/components/layout/nav";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,14 +19,12 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={cn(inter.className, 'min-h-screen bg-coffee-50')}>
-        <nav className="sticky top-0 z-50 border-b border-coffee-200 bg-white/80 backdrop-blur-sm">
-          <div className="mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-coffee-900">☕ Coffee Notes</h1>
-            </div>
-          </div>
-        </nav>
-        <main className="mx-auto max-w-screen-xl px-4 py-8">{children}</main>
+        <Nav />
+        <div className="lg:pl-64">
+          <main className="min-h-[calc(100vh-4rem)] pb-20 lg:pb-8">
+            <div className="mx-auto max-w-screen-xl px-4 py-8">{children}</div>
+          </main>
+        </div>
       </body>
     </html>
   );
