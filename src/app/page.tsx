@@ -1,27 +1,3 @@
-import { BeakerIcon, BookOpenIcon, UserIcon } from '@heroicons/react/24/outline'
-import Link from 'next/link'
-
-const features = [
-  {
-    name: '咖啡资讯',
-    description: 'AI 生成的咖啡相关内容，包括资讯文章、知识卡片、评测和食谱。',
-    href: '/news',
-    icon: BookOpenIcon,
-  },
-  {
-    name: '工具箱',
-    description: '实用的咖啡工具，包括计时器、手冲记录和烘焙记录。',
-    href: '/tools',
-    icon: BeakerIcon,
-  },
-  {
-    name: '个人中心',
-    description: '管理你的咖啡偏好、订阅话题和浏览历史记录。',
-    href: '/profile',
-    icon: UserIcon,
-  },
-]
-
 export default function HomePage() {
   return (
     <div>
