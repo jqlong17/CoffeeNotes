@@ -2,14 +2,12 @@
 
 import { useState, FormEvent, useEffect } from 'react'
 import {
-  BeakerIcon,
   ChartBarIcon,
   ClipboardIcon,
   StarIcon,
   PlayIcon,
   PauseIcon,
   StopIcon,
-  BellIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline'
 import {
@@ -70,15 +68,6 @@ const ROASTING_TAGS = [
 
 // 定义记录模式类型
 type RecordMode = 'temperature' | 'weightLoss'
-
-// 定义数据点类型
-interface DataPoint {
-  time: number // 秒数
-  weight?: number // 当前重量
-  lossRate?: number // 失重率
-  temperature?: number // 温度
-  tag?: string // 标签
-}
 
 // 添加一个计算Y轴范围的函数
 const calculateYAxisDomain = (points: WeightLossPoint[], targetRate: number): [number, number] => {
@@ -871,8 +860,8 @@ export default function RoastingPage() {
                 </div>
               </div>
 
-              {/* 底部固定按钮 */}
-              <div className="fixed bottom-0 left-0 right-0 flex gap-2 bg-white p-2 shadow-lg">
+              {/* 底部按钮 */}
+              <div className="flex gap-2 bg-white">
                 <button className="flex-1 rounded-md bg-coffee-600 px-4 py-2 text-white hover:bg-coffee-700">
                   保存记录
                 </button>
