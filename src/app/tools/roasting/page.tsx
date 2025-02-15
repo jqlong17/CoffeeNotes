@@ -14,7 +14,6 @@ import { PROCESS_OPTIONS, ROAST_LEVEL_OPTIONS, ROASTING_METHOD_OPTIONS } from '.
 import BasicInfo from './components/BasicInfo'
 import RoastingCurve from './components/RoastingCurve'
 import RoastingResult from './components/RoastingResult'
-import RoastingHeader from './components/RoastingHeader'
 import Dialog from '@/app/components/Dialog'
 import { roastingService } from './services/roastingService'
 import { formatDateTimeForInput } from './utils/dateUtils'
