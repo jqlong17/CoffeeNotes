@@ -28,19 +28,19 @@ const tools = [
 
 export default function ToolsPage() {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-6 pt-2">
       {tools.map((tool) => (
         <Link
           key={tool.name}
           href={tool.href}
-          className="flex flex-col gap-4 rounded-2xl border border-coffee-200 bg-white p-6 hover:border-coffee-300 hover:shadow-lg"
+          className="flex flex-col gap-2 lg:gap-4 rounded-xl lg:rounded-2xl border border-coffee-200 bg-white p-3 lg:p-6 hover:border-coffee-300 hover:shadow-lg"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-coffee-50">
-            <tool.icon className="h-6 w-6 text-coffee-600" />
+          <div className="flex h-8 w-8 lg:h-12 lg:w-12 items-center justify-center rounded-lg lg:rounded-xl bg-coffee-50">
+            <tool.icon className="h-4 w-4 lg:h-6 lg:w-6 text-coffee-600" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-coffee-900">{tool.name}</h2>
-            <p className="mt-2 text-sm text-coffee-600">{tool.description}</p>
+            <h2 className="text-base lg:text-lg font-semibold text-coffee-900">{tool.name}</h2>
+            <p className="mt-1 lg:mt-2 text-xs lg:text-sm text-coffee-600">{tool.description}</p>
           </div>
         </Link>
       ))}
