@@ -6,12 +6,14 @@ import Link from 'next/link'
 import { roastingService } from '../services/roastingService'
 import type { RoastingRecord } from '../types'
 import Dialog from '@/app/components/Dialog'
+import LoginPrompt from '@/app/components/LoginPrompt'
 
 export default function RoastingHistoryPage() {
   const [records, setRecords] = useState<RoastingRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [recordToDelete, setRecordToDelete] = useState<RoastingRecord | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -21,7 +23,11 @@ export default function RoastingHistoryPage() {
         const data = await roastingService.getRoastingRecords()
         setRecords(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : '加载失败')
+        if (err instanceof Error && err.message === '请先登录') {
+          setShowLoginPrompt(true)
+        } else {
+          setError(err instanceof Error ? err.message : '加载失败')
+        }
       } finally {
         setIsLoading(false)
       }
@@ -45,7 +51,11 @@ export default function RoastingHistoryPage() {
       setShowDeleteDialog(false)
       setRecordToDelete(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除失败')
+      if (err instanceof Error && err.message === '请先登录') {
+        setShowLoginPrompt(true)
+      } else {
+        setError(err instanceof Error ? err.message : '删除失败')
+      }
     } finally {
       setIsDeleting(false)
     }
@@ -171,6 +181,13 @@ export default function RoastingHistoryPage() {
           </button>
         </div>
       </Dialog>
+
+      {/* 登录提示 */}
+      <LoginPrompt
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        redirectPath="/tools/roasting/history"
+      />
     </div>
   )
 } 

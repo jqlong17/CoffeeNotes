@@ -86,28 +86,6 @@ export async function middleware(req: NextRequest) {
     path: req.nextUrl.pathname 
   })
 
-  // 需要认证的路由
-  const protectedRoutes = ['/tools/roasting']
-
-  // 检查当前路由是否需要认证
-  const isProtectedRoute = protectedRoutes.some(route => 
-    req.nextUrl.pathname.startsWith(route)
-  )
-
-  console.log('路由检查:', { 
-    isProtectedRoute,
-    currentPath: req.nextUrl.pathname
-  })
-
-  // 如果是受保护的路由且用户未登录，重定向到登录页
-  if (isProtectedRoute && !session) {
-    console.log('未登录访问受保护路由，重定向到登录页')
-    const redirectUrl = req.nextUrl.clone()
-    redirectUrl.pathname = '/login'
-    redirectUrl.searchParams.set(`redirectedFrom`, req.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
-  }
-
   // 如果用户已登录且访问登录页，重定向到首页
   if (session && req.nextUrl.pathname === '/login') {
     console.log('已登录用户访问登录页，重定向到首页')

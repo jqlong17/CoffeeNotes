@@ -1,6 +1,14 @@
 import { supabase } from '@/lib/supabase'
 import type { RoastingRecord } from '../types'
 
+// 自定义错误类
+export class AuthError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AuthError'
+  }
+}
+
 // 验证数据并返回警告信息
 const validateRecord = (record: Omit<RoastingRecord, 'id' | 'created_at' | 'updated_at'>): string[] => {
   const warnings = []
@@ -13,14 +21,20 @@ const validateRecord = (record: Omit<RoastingRecord, 'id' | 'created_at' | 'upda
   return warnings
 }
 
+// 检查用户登录状态
+const checkAuth = async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new AuthError('请先登录')
+  }
+  return user
+}
+
 export const roastingService = {
   // 保存完整的烘焙记录
   async saveRoastingRecord(record: Omit<RoastingRecord, 'id' | 'created_at' | 'updated_at'>) {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('请先登录')
-      }
+      const user = await checkAuth()
 
       // 获取警告信息
       const warnings = validateRecord(record)
@@ -64,6 +78,9 @@ export const roastingService = {
         warnings: warnings.length > 0 ? warnings : undefined
       }
     } catch (error) {
+      if (error instanceof AuthError) {
+        throw error
+      }
       console.error('保存烘焙记录时出错:', error)
       throw error instanceof Error ? error : new Error('未知错误')
     }
@@ -72,10 +89,7 @@ export const roastingService = {
   // 更新烘焙记录
   async updateRoastingRecord(id: string, record: Omit<RoastingRecord, 'id' | 'created_at' | 'updated_at'>) {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('请先登录')
-      }
+      const user = await checkAuth()
 
       // 获取警告信息
       const warnings = validateRecord(record)
@@ -107,6 +121,9 @@ export const roastingService = {
         warnings: warnings.length > 0 ? warnings : undefined
       }
     } catch (error) {
+      if (error instanceof AuthError) {
+        throw error
+      }
       console.error('更新烘焙记录时出错:', error)
       throw error instanceof Error ? error : new Error('未知错误')
     }
@@ -115,10 +132,7 @@ export const roastingService = {
   // 获取烘焙记录列表
   async getRoastingRecords() {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('请先登录')
-      }
+      const user = await checkAuth()
 
       const { data, error } = await supabase
         .from('roasting_records')
@@ -133,6 +147,9 @@ export const roastingService = {
 
       return data || []
     } catch (error) {
+      if (error instanceof AuthError) {
+        throw error
+      }
       console.error('获取烘焙记录列表时出错:', error)
       throw error
     }
@@ -141,10 +158,7 @@ export const roastingService = {
   // 获取单个烘焙记录
   async getRoastingRecord(id: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('请先登录')
-      }
+      const user = await checkAuth()
 
       const { data, error } = await supabase
         .from('roasting_records')
@@ -164,6 +178,9 @@ export const roastingService = {
 
       return data
     } catch (error) {
+      if (error instanceof AuthError) {
+        throw error
+      }
       console.error('获取单个烘焙记录时出错:', error)
       throw error
     }
@@ -172,10 +189,7 @@ export const roastingService = {
   // 删除烘焙记录
   async deleteRoastingRecord(id: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('请先登录')
-      }
+      const user = await checkAuth()
 
       const { error } = await supabase
         .from('roasting_records')
@@ -190,6 +204,9 @@ export const roastingService = {
 
       return true
     } catch (error) {
+      if (error instanceof AuthError) {
+        throw error
+      }
       console.error('删除烘焙记录时出错:', error)
       throw error instanceof Error ? error : new Error('未知错误')
     }

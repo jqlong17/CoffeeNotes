@@ -14,6 +14,9 @@ import Dialog from '@/app/components/Dialog'
 import { roastingService } from './services/roastingService'
 import { formatDateTimeForInput } from './utils/dateUtils'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import LoginPrompt from '@/app/components/LoginPrompt'
 
 // 初始状态
 const getInitialState = () => ({
@@ -62,6 +65,7 @@ export default function RoastingPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [showLoginDialog, setShowLoginDialog] = useState(false)
   
   // 表单数据状态
   const [formData, setFormData] = useState<RoastingFormData>(getInitialState().formData)
@@ -79,6 +83,9 @@ export default function RoastingPage() {
 
   // 评估结果状态
   const [assessment, setAssessment] = useState<RoastingAssessment>(getInitialState().assessment)
+
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
   // 监听数据变化
   useEffect(() => {
@@ -195,6 +202,13 @@ export default function RoastingPage() {
 
   // 保存完整记录
   const handleSave = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session) {
+      setShowLoginDialog(true)
+      return
+    }
+    
     try {
       setIsSaving(true)
       setSaveMessage(null)
@@ -428,6 +442,13 @@ export default function RoastingPage() {
           </button>
         </div>
       </Dialog>
+
+      {/* 登录对话框 */}
+      <LoginPrompt
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        redirectPath="/tools/roasting"
+      />
     </div>
   )
 } 

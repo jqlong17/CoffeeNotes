@@ -15,34 +15,27 @@ export default function TimerPage() {
   const [lastPointTime, setLastPointTime] = useState(0)
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
-
+    let timer: NodeJS.Timeout
     if (isRunning) {
-      interval = setInterval(() => {
+      timer = setInterval(() => {
         setTime((prevTime) => prevTime + 1)
       }, 1000)
     }
-
     return () => {
-      if (interval) clearInterval(interval)
+      if (timer) {
+        clearInterval(timer)
+      }
     }
   }, [isRunning])
 
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const remainingSeconds = seconds % 60
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds
-        .toString()
-        .padStart(2, '0')}`
-    }
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  const handleStart = () => {
+    setIsRunning(true)
   }
 
-  const handleStart = () => setIsRunning(true)
-  const handlePause = () => setIsRunning(false)
+  const handlePause = () => {
+    setIsRunning(false)
+  }
+
   const handleStop = () => {
     setIsRunning(false)
     setTime(0)
@@ -51,16 +44,21 @@ export default function TimerPage() {
   }
 
   const handlePoint = () => {
-    if (!isRunning) return
-    
-    const duration = time - lastPointTime
-    const newPoint: TimePoint = {
-      segment: timePoints.length + 1,
-      duration
-    }
-    
-    setTimePoints([...timePoints, newPoint])
+    const currentSegment = time - lastPointTime
+    setTimePoints([
+      ...timePoints,
+      {
+        segment: currentSegment,
+        duration: time
+      }
+    ])
     setLastPointTime(time)
+  }
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
   }
 
   return (
@@ -103,18 +101,15 @@ export default function TimerPage() {
           </div>
 
           {timePoints.length > 0 && (
-            <div className="border-t border-coffee-100 pt-6">
+            <div className="mt-8">
+              <h3 className="mb-4 text-lg font-medium text-coffee-900">计时点</h3>
               <div className="grid grid-cols-2 gap-4 text-sm text-coffee-600">
-                <div className="text-left font-medium">段数</div>
-                <div className="text-right font-medium">用时</div>
-                {timePoints.map((point) => (
-                  <React.Fragment key={point.segment}>
-                    <div className="text-left border-b border-coffee-50 py-2">
-                      第 {point.segment} 段
-                    </div>
-                    <div className="text-right border-b border-coffee-50 py-2">
-                      {formatTime(point.duration)}
-                    </div>
+                <div className="font-medium">分段时间</div>
+                <div className="font-medium">总计时间</div>
+                {timePoints.map((point, index) => (
+                  <React.Fragment key={index}>
+                    <div>{formatTime(point.segment)}</div>
+                    <div>{formatTime(point.duration)}</div>
                   </React.Fragment>
                 ))}
               </div>
