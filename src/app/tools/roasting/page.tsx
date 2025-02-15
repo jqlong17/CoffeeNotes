@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent, useEffect } from 'react'
+import { useState, FormEvent, useEffect, useRef, useMemo, useCallback } from 'react'
 import {
   ChartBarIcon,
   ClipboardIcon,
@@ -20,6 +20,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import type { ReactElement } from 'react'
+import type { SVGProps } from 'react'
 
 // 定义表单数据类型
 interface RoastingFormData {
@@ -27,9 +29,9 @@ interface RoastingFormData {
   beanName: string
   origin: string
   process: string
-  grade: string
   // 烘焙参数
   weight: number
+  moisture: number // 新增含水率字段
   roastLevel: string
   firstCrackTime: string
   secondCrackTime: string
@@ -55,6 +57,13 @@ interface WeightLossPoint {
   tag?: string // 标签
 }
 
+// 定义温度数据点类型
+interface TemperaturePoint {
+  time: number // 秒数
+  temperature: number // 温度
+  tag?: string // 标签
+}
+
 // 预设标签选项
 const ROASTING_TAGS = [
   '转黄',
@@ -69,19 +78,44 @@ const ROASTING_TAGS = [
 // 定义记录模式类型
 type RecordMode = 'temperature' | 'weightLoss'
 
-// 添加一个计算Y轴范围的函数
+// 修改计算Y轴范围的函数
 const calculateYAxisDomain = (points: WeightLossPoint[], targetRate: number): [number, number] => {
-  if (points.length === 0) return [0, 16];
+  // 计算初始显示范围：比目标失重率高4个百分点
+  const initialUpperBound = Math.ceil((targetRate + 4) / 4) * 4;
   
-  const maxLossRate = Math.max(
-    ...points.map(p => p.lossRate),
-    targetRate
-  );
+  if (points.length === 0) return [0, initialUpperBound];
   
-  // 向上取整到最接近的4的倍数,并额外增加4作为缓冲
-  const upperBound = Math.ceil(maxLossRate / 4) * 4 + 4;
+  // 获取实际最大失重率
+  const maxLossRate = Math.max(...points.map(p => p.lossRate));
+  
+  // 如果实际失重率超过了初始范围，则动态调整
+  if (maxLossRate > initialUpperBound) {
+    // 向上取整到最接近的4的倍数,并额外增加4作为缓冲
+    return [0, Math.ceil(maxLossRate / 4) * 4 + 4];
+  }
+  
+  // 否则保持初始范围
+  return [0, initialUpperBound];
+};
+
+// 添加温度Y轴范围计算函数
+const calculateTemperatureYAxisDomain = (points: TemperaturePoint[]): [number, number] => {
+  if (points.length === 0) return [0, 240];
+  
+  const maxTemperature = Math.max(...points.map(p => p.temperature));
+  
+  // 向上取整到最接近的60的倍数，并额外增加60作为缓冲
+  const upperBound = Math.ceil(maxTemperature / 60) * 60 + 60;
   
   return [0, upperBound];
+};
+
+// 添加一个计算X轴范围的函数
+const calculateXAxisDomain = (points: WeightLossPoint[]): [number, number] => {
+  if (points.length === 0) return [0, 300]; // 默认显示5分钟
+  
+  const maxTime = Math.max(...points.map(p => p.time));
+  return [0, Math.max(300, maxTime)]; // 确保最小显示5分钟
 };
 
 export default function RoastingPage() {
@@ -92,8 +126,8 @@ export default function RoastingPage() {
     beanName: '',
     origin: '',
     process: PROCESS_OPTIONS[0],
-    grade: '',
-    weight: 0,
+    weight: 70, // 设置默认生豆重量为 70g
+    moisture: 0,
     roastLevel: ROAST_LEVEL_OPTIONS[0],
     firstCrackTime: '',
     secondCrackTime: '',
@@ -121,6 +155,62 @@ export default function RoastingPage() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingWeight, setEditingWeight] = useState<number>(0);
   const [editingTag, setEditingTag] = useState<string>('');
+
+  // 温度相关状态
+  const [temperaturePoints, setTemperaturePoints] = useState<TemperaturePoint[]>([])
+
+  // 使用 useMemo 优化图表数据
+  const chartData = useMemo(() => {
+    return recordMode === 'weightLoss' ? weightLossPoints : temperaturePoints;
+  }, [weightLossPoints, temperaturePoints, recordMode]);
+
+  // 使用 useMemo 优化目标失重率线数据
+  const targetLine = useMemo(() => {
+    return [
+      { time: 0, target: targetLossRate },
+      { time: 1200, target: targetLossRate }
+    ];
+  }, [targetLossRate]);
+
+  // 使用 useMemo 计算 Y 轴范围
+  const yAxisDomain = useMemo(() => {
+    return calculateYAxisDomain(weightLossPoints, targetLossRate);
+  }, [weightLossPoints, targetLossRate]);
+
+  // 使用 useMemo 计算 X 轴范围
+  const xAxisDomain = useMemo(() => {
+    return calculateXAxisDomain(weightLossPoints);
+  }, [weightLossPoints]);
+
+  // 使用 useMemo 计算温度 Y 轴范围
+  const temperatureYAxisDomain = useMemo(() => {
+    return calculateTemperatureYAxisDomain(temperaturePoints);
+  }, [temperaturePoints]);
+
+  // 自定义数据点渲染
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    if (!cx || !cy) return null;
+    
+    if (payload.tag) {
+      return (
+        <g>
+          <circle cx={cx} cy={cy} r={4} fill="#795548" />
+          <text
+            x={cx}
+            y={cy - 10}
+            textAnchor="middle"
+            fill="#795548"
+            fontSize="12"
+          >
+            {payload.tag}
+          </text>
+        </g>
+      );
+    }
+    
+    return <circle cx={cx} cy={cy} r={2} fill="#795548" />;
+  };
 
   // 计时器
   useEffect(() => {
@@ -153,80 +243,57 @@ export default function RoastingPage() {
     }))
   }
 
-  // 修改记录按钮处理函数
+  // 修改记录函数
   const handleRecord = () => {
-    if (isRecording && !isNaN(currentWeight) && formData.weight > 0) {
-      const lossRate = ((formData.weight - currentWeight) / formData.weight) * 100
-      const tag = currentTag === '自定义' ? customTag : currentTag
-      console.log('记录数据点:', {
-        time: currentTime,
-        weight: currentWeight,
-        lossRate: lossRate,
-        tag: tag
-      })
-      setWeightLossPoints((prev) => [
-        ...prev,
-        {
-          time: currentTime,
-          weight: currentWeight,
-          lossRate: Math.max(0, lossRate),
-          tag: tag || undefined
-        },
-      ])
-      // 清空标签输入
-      setCurrentTag('')
-      setCustomTag('')
-    }
+    if (!isRecording || !currentWeight || !formData.weight) return;
+    
+    const lossRate = ((formData.weight - currentWeight) / formData.weight) * 100;
+    const tag = currentTag === '自定义' ? customTag : currentTag;
+    
+    const newPoint = {
+      time: currentTime,
+      weight: Number(currentWeight),
+      lossRate: Number(lossRate.toFixed(1)),
+      tag: tag || undefined
+    };
+    
+    setWeightLossPoints(prev => [...prev, newPoint]);
+    setCurrentTag('');
+    setCustomTag('');
   }
 
-  // 处理开始记录
+  // 修改开始记录的处理函数
   const handleStartRecording = () => {
-    // 检查初始重量
     if (!formData.weight || formData.weight <= 0) {
-      console.log('没有设置初始重量')
-      return
+      alert('请先设置初始重量');
+      return;
     }
     
-    console.log('开始记录，初始重量:', formData.weight)
-    
-    // 重置所有状态
-    setIsRecording(true)
-    setCurrentTime(0)
-    setWeightLossPoints([]) // 清除之前的记录
-    
-    // 设置当前重量为初始重量
-    const initialWeight = formData.weight
-    setCurrentWeight(initialWeight)
+    setIsRecording(true);
+    setCurrentTime(0);
+    setCurrentWeight(formData.weight);
     
     // 添加初始点
-    const initialPoint = {
+    setWeightLossPoints([{
       time: 0,
-      weight: initialWeight,
-      lossRate: 0
-    }
-    console.log('添加初始点:', initialPoint)
-    setWeightLossPoints([initialPoint])
-  }
-
-  // 在组件初始化和formData.weight变化时更新currentWeight
-  useEffect(() => {
-    if (formData.weight > 0 && !isRecording) {
-      setCurrentWeight(formData.weight)
-    }
-  }, [formData.weight, isRecording])
-
-  // 处理暂停记录
-  const handlePauseRecording = () => {
-    console.log('暂停记录')
-    setIsRecording(false)
+      weight: formData.weight,
+      lossRate: 0,
+      tag: '开始'
+    }]);
   }
 
   // 处理停止记录
   const handleStopRecording = () => {
-    console.log('停止记录')
     setIsRecording(false)
     setCurrentTime(0)
-    setWeightLossPoints([])
+  }
+
+  // 添加重置函数
+  const handleReset = () => {
+    setIsRecording(false);
+    setCurrentTime(0);
+    setWeightLossPoints([]);
+    setCurrentWeight(formData.weight || 0);
   }
 
   // 处理重量输入和失重率计算
@@ -241,29 +308,14 @@ export default function RoastingPage() {
     setCurrentTemperature(temp)
   }
 
-  // 格式化时间显示
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-  }
-
-  // 添加重置函数
-  const handleReset = () => {
-    if (isRecording) {
-      setIsRecording(false)
-    }
-    setCurrentTime(0)
-    setWeightLossPoints([])
-    setCurrentWeight(formData.weight || 0)
-  }
-
   // 在现有函数后添加编辑和删除的处理函数
   const handleEditClick = (index: number) => {
-    const point = weightLossPoints[index];
-    setEditingIndex(index);
-    setEditingWeight(point.weight);
-    setEditingTag(point.tag || '');
+    if (recordMode === 'weightLoss') {
+      const point = weightLossPoints[index];
+      setEditingIndex(index);
+      setEditingWeight(point.weight);
+      setEditingTag(point.tag || '');
+    }
   };
 
   const handleEditSave = (index: number) => {
@@ -289,8 +341,34 @@ export default function RoastingPage() {
 
   const handleDeletePoint = (index: number) => {
     if (window.confirm('确定要删除这条记录吗？')) {
-      setWeightLossPoints((prev) => prev.filter((_, i) => i !== index));
+      if (recordMode === 'weightLoss') {
+        setWeightLossPoints((prev) => prev.filter((_, i) => i !== index));
+      } else {
+        setTemperaturePoints((prev) => prev.filter((_, i) => i !== index));
+      }
     }
+  };
+
+  // 格式化时间显示
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+
+  // 修改温度记录函数
+  const handleTemperatureRecord = () => {
+    if (!isRecording || !currentTemperature) return;
+    
+    const newPoint = {
+      time: currentTime,
+      temperature: Number(currentTemperature),
+      tag: currentTag === '自定义' ? customTag : currentTag || undefined
+    };
+    
+    setTemperaturePoints(prev => [...prev, newPoint]);
+    setCurrentTag('');
+    setCustomTag('');
   };
 
   return (
@@ -383,18 +461,6 @@ export default function RoastingPage() {
                     </select>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-coffee-700">
-                    生豆等级
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.grade}
-                    onChange={(e) => handleChange('grade', e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-coffee-200 px-3 py-2 text-coffee-900 focus:border-coffee-500 focus:outline-none focus:ring-1 focus:ring-coffee-500"
-                    placeholder="例如：Grade 1"
-                  />
-                </div>
               </div>
 
               {/* 烘焙参数 */}
@@ -415,19 +481,18 @@ export default function RoastingPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-coffee-700">
-                      烘焙度
+                      含水率 (%)
                     </label>
-                    <select
-                      value={formData.roastLevel}
-                      onChange={(e) => handleChange('roastLevel', e.target.value)}
+                    <input
+                      type="number"
+                      value={formData.moisture || ''}
+                      onChange={(e) => handleChange('moisture', Number(e.target.value))}
                       className="mt-1 block w-full rounded-md border border-coffee-200 px-3 py-2 text-coffee-900 focus:border-coffee-500 focus:outline-none focus:ring-1 focus:ring-coffee-500"
-                    >
-                      {ROAST_LEVEL_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="10.5"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -449,7 +514,25 @@ export default function RoastingPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-coffee-700">
-                      一爆时间 (分:秒)
+                      目标烘焙度
+                    </label>
+                    <select
+                      value={formData.roastLevel}
+                      onChange={(e) => handleChange('roastLevel', e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-coffee-200 px-3 py-2 text-coffee-900 focus:border-coffee-500 focus:outline-none focus:ring-1 focus:ring-coffee-500"
+                    >
+                      {ROAST_LEVEL_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-coffee-700">
+                      一爆时间
                     </label>
                     <input
                       type="text"
@@ -457,11 +540,12 @@ export default function RoastingPage() {
                       onChange={(e) => handleChange('firstCrackTime', e.target.value)}
                       className="mt-1 block w-full rounded-md border border-coffee-200 px-3 py-2 text-coffee-900 focus:border-coffee-500 focus:outline-none focus:ring-1 focus:ring-coffee-500"
                       placeholder="8:30"
+                      disabled
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-coffee-700">
-                      二爆时间 (分:秒)
+                      二爆时间
                     </label>
                     <input
                       type="text"
@@ -469,20 +553,22 @@ export default function RoastingPage() {
                       onChange={(e) => handleChange('secondCrackTime', e.target.value)}
                       className="mt-1 block w-full rounded-md border border-coffee-200 px-3 py-2 text-coffee-900 focus:border-coffee-500 focus:outline-none focus:ring-1 focus:ring-coffee-500"
                       placeholder="10:15"
+                      disabled
                     />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-coffee-700">
-                    总烘焙时间 (分:秒)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.totalTime}
-                    onChange={(e) => handleChange('totalTime', e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-coffee-200 px-3 py-2 text-coffee-900 focus:border-coffee-500 focus:outline-none focus:ring-1 focus:ring-coffee-500"
-                    placeholder="11:00"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-coffee-700">
+                      总时间
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.totalTime}
+                      onChange={(e) => handleChange('totalTime', e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-coffee-200 px-3 py-2 text-coffee-900 focus:border-coffee-500 focus:outline-none focus:ring-1 focus:ring-coffee-500"
+                      placeholder="11:00"
+                      disabled
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -592,18 +678,12 @@ export default function RoastingPage() {
                       </button>
                     ) : (
                       <button
-                        onClick={handlePauseRecording}
+                        onClick={handleStopRecording}
                         className="flex h-9 w-9 items-center justify-center rounded-full bg-coffee-600 text-white hover:bg-coffee-700"
                       >
-                        <PauseIcon className="h-4 w-4" />
+                        <StopIcon className="h-4 w-4" />
                       </button>
                     )}
-                    <button
-                      onClick={handleStopRecording}
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-coffee-100 text-coffee-600 hover:bg-coffee-200"
-                    >
-                      <StopIcon className="h-4 w-4" />
-                    </button>
                     <button
                       onClick={handleReset}
                       className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200"
@@ -668,7 +748,7 @@ export default function RoastingPage() {
                       )}
                     </div>
                     <button
-                      onClick={handleRecord}
+                      onClick={recordMode === 'weightLoss' ? handleRecord : handleTemperatureRecord}
                       disabled={!isRecording || (recordMode === 'weightLoss' ? !currentWeight : !currentTemperature)}
                       className="w-full rounded-md bg-coffee-600 px-4 py-1.5 text-white hover:bg-coffee-700 disabled:opacity-50"
                     >
@@ -681,85 +761,46 @@ export default function RoastingPage() {
               {/* 曲线图表区域 */}
               <div className="h-[300px] rounded-lg border border-coffee-200 p-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={weightLossPoints}
-                    margin={{
-                      top: 10,
-                      right: 10,
-                      left: 0,
-                      bottom: 10,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="time"
-                      tickFormatter={formatTime}
-                      label={{ value: '时间', position: 'insideBottom', offset: -10 }}
-                      type="number"
-                      domain={[0, 'auto']}
-                    />
-                    <YAxis
-                      domain={calculateYAxisDomain(weightLossPoints, targetLossRate)}
-                      label={{
-                        value: '失重率 (%)',
-                        angle: -90,
-                        position: 'insideLeft',
-                        offset: 20,
+                  {recordMode === 'weightLoss' ? (
+                    <LineChart
+                      data={weightLossPoints}
+                      margin={{
+                        top: 20,
+                        right: 10,
+                        left: 10,
+                        bottom: 10,
                       }}
-                    />
-                    <Tooltip
-                      formatter={(value: number, name: string) => [
-                        `${value.toFixed(1)}%`,
-                        name === 'lossRate' ? '失重率' : name === 'target' ? '目标失重率' : name,
-                      ]}
-                      labelFormatter={(label: number) => `时间: ${formatTime(label)}`}
-                      contentStyle={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        border: '1px solid #795548',
-                        borderRadius: '4px',
-                        padding: '8px',
-                      }}
-                    />
-                    <Legend
-                      wrapperStyle={{
-                        paddingTop: '10px',
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="lossRate"
-                      name="失重率"
-                      stroke="#795548"
-                      dot={(props) => {
-                        const { cx, cy, payload } = props;
-                        if (payload.tag) {
-                          return (
-                            <g>
-                              <circle cx={cx} cy={cy} r={4} fill="#795548" />
-                              <text
-                                x={cx}
-                                y={cy - 10}
-                                textAnchor="middle"
-                                fill="#795548"
-                                fontSize="12"
-                              >
-                                {payload.tag}
-                              </text>
-                            </g>
-                          );
-                        }
-                        return <circle cx={cx} cy={cy} r={2} fill="#795548" />;
-                      }}
-                      strokeWidth={2}
-                      isAnimationActive={false}
-                    />
-                    {weightLossPoints.length > 0 && (
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="time"
+                        tickFormatter={formatTime}
+                        label={{ value: '时间', position: 'insideBottom', offset: -10 }}
+                        type="number"
+                        domain={xAxisDomain}
+                      />
+                      <YAxis
+                        domain={yAxisDomain}
+                        label={{
+                          value: '失重率 (%)',
+                          angle: -90,
+                          position: 'insideLeft',
+                          offset: 10
+                        }}
+                      />
+                      <Tooltip
+                        formatter={(value: number, name: string) => [
+                          `${value.toFixed(1)}%`,
+                          name === 'lossRate' ? '失重率' : '目标失重率'
+                        ]}
+                        labelFormatter={(label: number) => `时间: ${formatTime(label)}`}
+                      />
+                      <Legend />
+                      
+                      {/* 目标失重率线 */}
                       <Line
                         type="monotone"
-                        data={[
-                          { time: weightLossPoints[0].time, target: targetLossRate, key: 'start' },
-                          { time: weightLossPoints[weightLossPoints.length - 1].time, target: targetLossRate, key: 'end' }
-                        ]}
+                        data={targetLine}
                         dataKey="target"
                         name="目标失重率"
                         stroke="#E91E63"
@@ -767,8 +808,63 @@ export default function RoastingPage() {
                         dot={false}
                         isAnimationActive={false}
                       />
-                    )}
-                  </LineChart>
+                      
+                      {/* 实际失重率曲线 */}
+                      <Line
+                        type="monotone"
+                        dataKey="lossRate"
+                        name="失重率"
+                        stroke="#795548"
+                        strokeWidth={2}
+                        dot={<CustomDot />}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  ) : (
+                    <LineChart
+                      data={temperaturePoints}
+                      margin={{
+                        top: 20,
+                        right: 10,
+                        left: 10,
+                        bottom: 10,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="time"
+                        tickFormatter={formatTime}
+                        label={{ value: '时间', position: 'insideBottom', offset: -10 }}
+                        type="number"
+                        domain={xAxisDomain}
+                      />
+                      <YAxis
+                        domain={temperatureYAxisDomain}
+                        label={{
+                          value: '温度 (°C)',
+                          angle: -90,
+                          position: 'insideLeft',
+                          offset: 10
+                        }}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => [`${value}°C`, '温度']}
+                        labelFormatter={(label: number) => `时间: ${formatTime(label)}`}
+                      />
+                      <Legend />
+                      
+                      {/* 温度曲线 */}
+                      <Line
+                        type="monotone"
+                        dataKey="temperature"
+                        name="温度"
+                        stroke="#FF5722"
+                        strokeWidth={2}
+                        dot={<CustomDot />}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  )}
                 </ResponsiveContainer>
               </div>
 
@@ -779,71 +875,100 @@ export default function RoastingPage() {
                     <thead>
                       <tr className="border-b border-coffee-200">
                         <th className="w-20 px-2 py-1">时间</th>
-                        <th className="w-24 px-2 py-1 text-right">重量</th>
-                        <th className="w-24 px-2 py-1 text-right">失重率</th>
+                        {recordMode === 'weightLoss' ? (
+                          <>
+                            <th className="w-24 px-2 py-1 text-right">重量</th>
+                            <th className="w-24 px-2 py-1 text-right">失重率</th>
+                          </>
+                        ) : (
+                          <th className="w-24 px-2 py-1 text-right">温度</th>
+                        )}
                         <th className="w-28 px-2 py-1">标签</th>
                         <th className="w-32 px-2 py-1 text-center">操作</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {weightLossPoints.map((point, index) => (
-                        <tr key={index} className="border-b border-coffee-100">
-                          <td className="px-2 py-1">{formatTime(point.time)}</td>
-                          <td className="px-2 py-1 text-right">
-                            {editingIndex === index ? (
-                              <input
-                                type="number"
-                                value={editingWeight}
-                                onChange={(e) => setEditingWeight(Number(e.target.value))}
-                                className="w-20 rounded-md border border-coffee-200 px-2 py-1 text-right"
-                              />
-                            ) : (
-                              point.weight
-                            )}
-                          </td>
-                          <td className="px-2 py-1 text-right">{point.lossRate.toFixed(1)}%</td>
-                          <td className="px-2 py-1">
-                            {editingIndex === index ? (
-                              <select
-                                value={editingTag}
-                                onChange={(e) => setEditingTag(e.target.value)}
-                                className="w-full rounded-md border border-coffee-200 px-2 py-1"
-                              >
-                                <option value="">无标签</option>
-                                {ROASTING_TAGS.map((tag) => (
-                                  <option key={tag} value={tag}>
-                                    {tag}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              point.tag || '-'
-                            )}
-                          </td>
-                          <td className="px-2 py-1 text-center">
-                            {editingIndex === index ? (
+                      {recordMode === 'weightLoss' ? (
+                        weightLossPoints.map((point, index) => (
+                          <tr key={index} className="border-b border-coffee-100">
+                            <td className="px-2 py-1">{formatTime(point.time)}</td>
+                            <td className="px-2 py-1 text-right">
+                              {editingIndex === index ? (
+                                <input
+                                  type="number"
+                                  value={editingWeight}
+                                  onChange={(e) => setEditingWeight(Number(e.target.value))}
+                                  className="w-20 rounded-md border border-coffee-200 px-2 py-1 text-right"
+                                />
+                              ) : (
+                                point.weight
+                              )
+                            }
+                            </td>
+                            <td className="px-2 py-1 text-right">
+                              {point.lossRate.toFixed(1)}%
+                            </td>
+                            <td className="px-2 py-1">
+                              {editingIndex === index ? (
+                                <select
+                                  value={editingTag}
+                                  onChange={(e) => setEditingTag(e.target.value)}
+                                  className="w-full rounded-md border border-coffee-200 px-2 py-1"
+                                >
+                                  <option value="">无标签</option>
+                                  {ROASTING_TAGS.map((tag) => (
+                                    <option key={tag} value={tag}>
+                                      {tag}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                point.tag || '-'
+                              )}
+                            </td>
+                            <td className="px-2 py-1 text-center">
+                              {editingIndex === index ? (
+                                <div className="flex justify-center gap-1">
+                                  <button
+                                    onClick={() => handleEditSave(index)}
+                                    className="rounded bg-coffee-600 px-2 py-1 text-xs text-white hover:bg-coffee-700"
+                                  >
+                                    保存
+                                  </button>
+                                  <button
+                                    onClick={handleEditCancel}
+                                    className="rounded bg-gray-500 px-2 py-1 text-xs text-white hover:bg-gray-600"
+                                  >
+                                    取消
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex justify-center gap-1">
+                                  <button
+                                    onClick={() => handleEditClick(index)}
+                                    className="rounded bg-coffee-100 px-2 py-1 text-xs text-coffee-600 hover:bg-coffee-200"
+                                  >
+                                    编辑
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeletePoint(index)}
+                                    className="rounded bg-red-100 px-2 py-1 text-xs text-red-600 hover:bg-red-200"
+                                  >
+                                    删除
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        temperaturePoints.map((point, index) => (
+                          <tr key={index} className="border-b border-coffee-100">
+                            <td className="px-2 py-1">{formatTime(point.time)}</td>
+                            <td className="px-2 py-1 text-right">{point.temperature}°C</td>
+                            <td className="px-2 py-1">{point.tag || '-'}</td>
+                            <td className="px-2 py-1 text-center">
                               <div className="flex justify-center gap-1">
-                                <button
-                                  onClick={() => handleEditSave(index)}
-                                  className="rounded bg-coffee-600 px-2 py-1 text-xs text-white hover:bg-coffee-700"
-                                >
-                                  保存
-                                </button>
-                                <button
-                                  onClick={handleEditCancel}
-                                  className="rounded bg-gray-500 px-2 py-1 text-xs text-white hover:bg-gray-600"
-                                >
-                                  取消
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex justify-center gap-1">
-                                <button
-                                  onClick={() => handleEditClick(index)}
-                                  className="rounded bg-coffee-100 px-2 py-1 text-xs text-coffee-600 hover:bg-coffee-200"
-                                >
-                                  编辑
-                                </button>
                                 <button
                                   onClick={() => handleDeletePoint(index)}
                                   className="rounded bg-red-100 px-2 py-1 text-xs text-red-600 hover:bg-red-200"
@@ -851,10 +976,10 @@ export default function RoastingPage() {
                                   删除
                                 </button>
                               </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
