@@ -14,7 +14,6 @@ import Dialog from '@/app/components/Dialog'
 import { roastingService } from './services/roastingService'
 import { formatDateTimeForInput } from './utils/dateUtils'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import LoginPrompt from '@/app/components/LoginPrompt'
 
@@ -84,7 +83,6 @@ export default function RoastingPage() {
   // 评估结果状态
   const [assessment, setAssessment] = useState<RoastingAssessment>(getInitialState().assessment)
 
-  const router = useRouter()
   const supabase = createClientComponentClient()
 
   // 监听数据变化
