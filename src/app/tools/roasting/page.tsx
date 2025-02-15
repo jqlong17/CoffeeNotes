@@ -1,10 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import {
-  PlusIcon,
-  DocumentCheckIcon,
-} from '@heroicons/react/24/outline'
+import { useState, useEffect, useCallback } from 'react'
 import type { RoastingFormData, WeightLossPoint, TemperaturePoint, RoastingAssessment } from './types'
 import { PROCESS_OPTIONS, ROAST_LEVEL_OPTIONS, ROASTING_METHOD_OPTIONS } from './types'
 import BasicInfo from './components/BasicInfo'
@@ -61,7 +57,6 @@ export default function RoastingPage() {
   const [activeTab, setActiveTab] = useState('form') // 'form' | 'curve' | 'result'
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [showLoginDialog, setShowLoginDialog] = useState(false)
@@ -102,6 +97,95 @@ export default function RoastingPage() {
       if (timer) clearInterval(timer)
     }
   }, [isRecording])
+
+  // 新建记录
+  const handleNew = useCallback(() => {
+    const initialState = getInitialState()
+    setFormData(initialState.formData)
+    setAssessment(initialState.assessment)
+    setWeightLossPoints(initialState.weightLossPoints)
+    setTemperaturePoints(initialState.temperaturePoints)
+    setTargetLossRate(initialState.targetLossRate)
+    setCurrentTime(initialState.currentTime)
+    setIsRecording(initialState.isRecording)
+    setCurrentRecordId(null)
+    setHasUnsavedChanges(false)
+  }, [])
+
+  // 保存完整记录
+  const handleSave = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session) {
+      setShowLoginDialog(true)
+      return
+    }
+    
+    try {
+      setSaveMessage(null)
+
+      const record = {
+        basic_info: formData,
+        curve_data: {
+          weightLossPoints,
+          temperaturePoints,
+          targetLossRate
+        },
+        assessment
+      }
+
+      if (currentRecordId) {
+        await roastingService.updateRoastingRecord(currentRecordId, record)
+      } else {
+        const { data } = await roastingService.saveRoastingRecord(record)
+        setCurrentRecordId(data.id)
+      }
+
+      setHasUnsavedChanges(false)
+      setSaveMessage({
+        type: 'success',
+        text: '烘焙记录已保存'
+      })
+      // 3秒后自动清除消息
+      setTimeout(() => setSaveMessage(null), 3000)
+    } catch (error) {
+      setSaveMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : '保存失败，请重试'
+      })
+    }
+  }, [
+    formData,
+    assessment,
+    weightLossPoints,
+    temperaturePoints,
+    targetLossRate,
+    currentRecordId,
+    supabase.auth
+  ])
+
+  // 添加事件监听
+  useEffect(() => {
+    const handleNewEvent = () => {
+      if (hasUnsavedChanges) {
+        setShowConfirmDialog(true)
+      } else {
+        handleNew()
+      }
+    }
+
+    const handleSaveEvent = () => {
+      handleSave()
+    }
+
+    window.addEventListener('roasting:new', handleNewEvent)
+    window.addEventListener('roasting:save', handleSaveEvent)
+
+    return () => {
+      window.removeEventListener('roasting:new', handleNewEvent)
+      window.removeEventListener('roasting:save', handleSaveEvent)
+    }
+  }, [hasUnsavedChanges, handleNew, handleSave])
 
   // 处理表单字段变化
   const handleChange = (
@@ -198,113 +282,12 @@ export default function RoastingPage() {
     setAssessment(newAssessment)
   }
 
-  // 保存完整记录
-  const handleSave = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session) {
-      setShowLoginDialog(true)
-      return
-    }
-    
-    try {
-      setIsSaving(true)
-      setSaveMessage(null)
-
-      const record = {
-        basic_info: formData,
-        curve_data: {
-          weightLossPoints,
-          temperaturePoints,
-          targetLossRate
-        },
-        assessment
-      }
-
-      if (currentRecordId) {
-        await roastingService.updateRoastingRecord(currentRecordId, record)
-      } else {
-        const { data } = await roastingService.saveRoastingRecord(record)
-        setCurrentRecordId(data.id)
-      }
-
-      setHasUnsavedChanges(false)
-      setSaveMessage({
-        type: 'success',
-        text: '烘焙记录已保存'
-      })
-      // 3秒后自动清除消息
-      setTimeout(() => setSaveMessage(null), 3000)
-    } catch (error) {
-      setSaveMessage({
-        type: 'error',
-        text: error instanceof Error ? error.message : '保存失败，请重试'
-      })
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  // 新建记录
-  const handleNew = () => {
-    const initialState = getInitialState()
-    setFormData(initialState.formData)
-    setAssessment(initialState.assessment)
-    setWeightLossPoints(initialState.weightLossPoints)
-    setTemperaturePoints(initialState.temperaturePoints)
-    setTargetLossRate(initialState.targetLossRate)
-    setCurrentTime(initialState.currentTime)
-    setIsRecording(initialState.isRecording)
-    setCurrentRecordId(null)
-    setHasUnsavedChanges(false)
-  }
-
-  // 新建记录
-  const handleNewClick = () => {
-    if (hasUnsavedChanges) {
-      setShowConfirmDialog(true)
-    } else {
-      handleNew()
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 页面标题 */}
-      <div className="border-b border-coffee-200 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
-            <h1 className="text-xl font-semibold text-coffee-900">烘焙记录</h1>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleNewClick}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-coffee-600 hover:text-coffee-700 hover:bg-coffee-50 rounded-md"
-              >
-                <PlusIcon className="w-4 h-4" />
-                新建
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving || !hasUnsavedChanges}
-                className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md
-                  ${
-                    isSaving || !hasUnsavedChanges
-                      ? 'bg-coffee-100 text-coffee-400 cursor-not-allowed'
-                      : 'bg-coffee-600 text-white hover:bg-coffee-700'
-                  }`}
-              >
-                <DocumentCheckIcon className="w-4 h-4" />
-                {isSaving ? '保存中...' : '保存'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* 主要内容 */}
       <div className="container mx-auto">
         {saveMessage && (
-          <div className="px-4 py-2 m-4">
+          <div className="px-4 py-2">
             <div
               className={`px-4 py-2 rounded-lg text-sm ${
                 saveMessage.type === 'success'
@@ -318,9 +301,9 @@ export default function RoastingPage() {
           </div>
         )}
         
-        <div className="p-4 space-y-8">
+        <div className="px-4 space-y-4">
           {/* 标签切换 */}
-          <div className="mb-6 flex rounded-lg border border-coffee-200 bg-white p-1">
+          <div className="flex rounded-lg border border-coffee-200 bg-white p-1">
             <button
               onClick={() => setActiveTab('form')}
               className={`flex flex-1 items-center justify-center rounded-md px-4 py-2 text-sm font-medium ${

@@ -28,22 +28,26 @@ const tools = [
 
 export default function ToolsPage() {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {tools.map((tool) => (
-        <Link
-          key={tool.name}
-          href={tool.href}
-          className="flex flex-col gap-4 rounded-xl border border-coffee-200 bg-white p-4 md:p-6 hover:border-coffee-300 hover:shadow-lg transition-all duration-200"
-        >
-          <div className="flex h-10 md:h-12 w-10 md:w-12 items-center justify-center rounded-xl bg-coffee-50">
-            <tool.icon className="h-5 md:h-6 w-5 md:w-6 text-coffee-600" />
-          </div>
-          <div>
-            <h2 className="text-base md:text-lg font-semibold text-coffee-900">{tool.name}</h2>
-            <p className="mt-2 text-xs md:text-sm text-coffee-600">{tool.description}</p>
-          </div>
-        </Link>
-      ))}
-    </div>
+    <main>
+      <div className="container mx-auto p-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {tools.map((tool) => (
+            <Link
+              key={tool.name}
+              href={tool.href}
+              className="flex flex-col gap-4 rounded-xl border border-coffee-200 bg-white p-4 hover:border-coffee-300 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-coffee-50">
+                <tool.icon className="h-5 w-5 text-coffee-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-coffee-900">{tool.name}</h2>
+                <p className="mt-2 text-sm text-coffee-600">{tool.description}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </main>
   )
 } 

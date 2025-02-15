@@ -19,7 +19,7 @@ export default function Home() {
   }
 
   return (
-    <main>
+    <main className="min-h-screen bg-gray-50">
       <div className="container mx-auto">
         <div className="border-b border-coffee-200 bg-white">
           <div className="px-4 py-4">
