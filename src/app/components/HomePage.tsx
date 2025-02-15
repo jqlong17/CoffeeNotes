@@ -23,6 +23,7 @@ export default function HomePage() {
       {MOCK_POSTS.map(post => (
         <ContentCard
           key={post.id}
+          id={post.id}
           imageEmoji={post.imageEmoji}
           image_content={post.image_content}
           title={post.title}

@@ -13,6 +13,7 @@ const BG_COLORS = [
 ]
 
 interface ContentCardProps {
+  id: string
   imageEmoji: string
   image_content: string
   title: string
@@ -27,6 +28,7 @@ interface ContentCardProps {
 }
 
 export default function ContentCard({
+  id,
   imageEmoji,
   image_content,
   title,
@@ -36,19 +38,19 @@ export default function ContentCard({
   onLike,
   onClick,
 }: ContentCardProps) {
-  // 使用 useMemo 确保在重新渲染时保持相同的背景颜色
+  // 使用 id 来确定性地选择颜色
   const bgColor = useMemo(() => {
-    const randomIndex = Math.floor(Math.random() * BG_COLORS.length)
-    return BG_COLORS[randomIndex]
-  }, [])
+    const index = parseInt(id, 10) % BG_COLORS.length
+    return BG_COLORS[index]
+  }, [id])
 
   return (
     <div 
-      className="group flex flex-col rounded-2xl overflow-hidden bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100"
+      className="group flex flex-col justify-between rounded-2xl overflow-hidden bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 min-h-[300px]"
       onClick={onClick}
     >
       {/* 封面区域 */}
-      <div className="relative aspect-[4/3] bg-gray-50">
+      <div className="relative aspect-[4/3] bg-gray-50 mb-0">
         {/* 空白背景 */}
         <div className="absolute inset-0 bg-white" />
         
@@ -69,7 +71,7 @@ export default function ContentCard({
       </div>
 
       {/* 内容区域 */}
-      <div className="p-3">
+      <div className="p-3 mt-0">
         {/* 标题 */}
         <h3 className="text-sm text-gray-900 leading-normal mb-2 line-clamp-2">
           {title}
