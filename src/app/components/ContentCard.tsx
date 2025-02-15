@@ -36,15 +36,15 @@ export default function ContentCard({
         <div className="absolute inset-0 bg-white" />
         
         {/* 内容容器 */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
           {/* Emoji */}
-          <div className="text-[100px] leading-none mb-6 opacity-90">
+          <div className="text-[80px] leading-none mb-4 opacity-90">
             {imageEmoji}
           </div>
           {/* 大字文本 */}
-          <div className="relative inline-block">
+          <div className="relative inline-block max-w-[90%]">
             <span className="absolute inset-0 bg-yellow-100/80 -rotate-1 block"></span>
-            <span className="relative text-2xl font-medium text-gray-900 px-4 py-1.5 inline-block">
+            <span className="relative text-xl font-medium text-gray-900 px-3 py-1 inline-block">
               {image_content}
             </span>
           </div>
@@ -52,20 +52,20 @@ export default function ContentCard({
       </div>
 
       {/* 内容区域 */}
-      <div className="p-4">
+      <div className="p-3">
         {/* 标题 */}
-        <h3 className="text-base text-gray-900 leading-normal mb-3">
+        <h3 className="text-sm text-gray-900 leading-normal mb-2 line-clamp-2">
           {title}
         </h3>
 
         {/* 作者和点赞信息 */}
         <div className="flex items-center justify-between">
           {/* 作者信息 */}
-          <div className="flex items-center gap-2">
-            <span className="w-5 h-5 flex items-center justify-center text-sm">
+          <div className="flex items-center gap-1.5">
+            <span className="w-4 h-4 flex items-center justify-center text-sm">
               {author.avatar}
             </span>
-            <span className="text-sm text-gray-600">
+            <span className="text-xs text-gray-600">
               {author.name}
             </span>
           </div>
@@ -79,11 +79,11 @@ export default function ContentCard({
             }}
           >
             {isLiked ? (
-              <HeartSolidIcon className="w-4 h-4 text-red-500" />
+              <HeartSolidIcon className="w-3.5 h-3.5 text-red-500" />
             ) : (
-              <HeartIcon className="w-4 h-4" />
+              <HeartIcon className="w-3.5 h-3.5" />
             )}
-            <span className="text-sm text-gray-400">{likes}</span>
+            <span className="text-xs text-gray-400">{likes}</span>
           </div>
         </div>
       </div>
