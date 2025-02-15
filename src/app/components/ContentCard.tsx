@@ -46,11 +46,11 @@ export default function ContentCard({
 
   return (
     <div 
-      className="group flex flex-col rounded-2xl overflow-hidden bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 min-h-[300px]"
+      className="group flex flex-col rounded-2xl overflow-hidden bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 min-h-[100px]"
       onClick={onClick}
     >
       {/* 封面区域 */}
-      <div className="relative aspect-[3/4]">
+      <div className="relative aspect-[9/10]">
         {/* 内容容器 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
           {/* Emoji */}

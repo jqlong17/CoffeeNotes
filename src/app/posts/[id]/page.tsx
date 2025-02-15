@@ -84,20 +84,20 @@ export default function PostDetail({ params }: PageProps) {
         </div>
 
         {/* 封面区域 */}
-        <div className="relative aspect-[4/3] bg-gray-50 mx-4">
+        <div className="relative aspect-[2/1] bg-gray-50 mx-4">
           {/* 空白背景 */}
           <div className="absolute inset-0 bg-white border border-gray-100 rounded-xl shadow-sm" />
           
           {/* 内容容器 */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
             {/* Emoji */}
-            <div className="text-[140px] leading-none mb-8 opacity-90">
+            <div className="text-[80px] leading-none mb-4 opacity-90">
               {post.imageEmoji}
             </div>
             {/* 大字文本 */}
             <div className="relative inline-block">
               <span className="absolute inset-0 bg-yellow-100/80 -rotate-1 block"></span>
-              <span className="relative text-4xl font-medium text-gray-900 px-6 py-2 inline-block whitespace-pre-line">
+              <span className="relative text-2xl font-medium text-gray-900 px-4 py-1.5 inline-block whitespace-pre-line">
                 {post.image_content}
               </span>
             </div>
