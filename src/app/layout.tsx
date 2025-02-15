@@ -6,7 +6,7 @@ import ClientLayout from './ClientLayout'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: '咖啡笔记',
+  title: 'CoffeeNotes',
   description: '发现、学习、分享咖啡的乐趣',
 }
 

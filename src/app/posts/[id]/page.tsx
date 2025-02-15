@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeftIcon, ShareIcon } from '@heroicons/react/24/outline'
 import { HeartIcon, StarIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartSolidIcon, StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import ReactMarkdown from 'react-markdown'
 import { MOCK_POSTS } from '@/app/data/mockPosts'
 import { MOCK_COMMENTS } from '@/app/data/mockComments'
 
@@ -83,9 +84,9 @@ export default function PostDetail({ params }: PageProps) {
         </div>
 
         {/* 封面区域 */}
-        <div className="relative aspect-[4/3] bg-gray-50">
+        <div className="relative aspect-[4/3] bg-gray-50 mx-4">
           {/* 空白背景 */}
-          <div className="absolute inset-0 bg-white" />
+          <div className="absolute inset-0 bg-white border border-gray-100 rounded-xl shadow-sm" />
           
           {/* 内容容器 */}
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
@@ -96,7 +97,7 @@ export default function PostDetail({ params }: PageProps) {
             {/* 大字文本 */}
             <div className="relative inline-block">
               <span className="absolute inset-0 bg-yellow-100/80 -rotate-1 block"></span>
-              <span className="relative text-4xl font-medium text-gray-900 px-6 py-2 inline-block">
+              <span className="relative text-4xl font-medium text-gray-900 px-6 py-2 inline-block whitespace-pre-line">
                 {post.image_content}
               </span>
             </div>
@@ -105,61 +106,61 @@ export default function PostDetail({ params }: PageProps) {
 
         {/* 文章内容 */}
         <div className="px-4 py-6">
-          <p className="text-base text-gray-700 leading-relaxed">
-            这是一篇关于{post.title}的详细内容。
-            这里应该是从数据库获取的实际文章内容。
-            现在使用占位文本来模拟真实内容的展示效果。
-          </p>
+          <article className="prose prose-sm max-w-none prose-headings:font-medium prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-coffee-600 prose-blockquote:text-gray-500 prose-blockquote:border-coffee-200 prose-strong:text-gray-700 prose-code:text-coffee-600 prose-pre:bg-gray-50 prose-pre:text-sm border border-gray-100 rounded-xl p-6 shadow-sm bg-white">
+            <ReactMarkdown>{post.article_content}</ReactMarkdown>
+          </article>
         </div>
 
         {/* 评论区 */}
-        <div className="mt-6 border-t border-gray-100">
-          <div className="px-4 py-4">
-            <h2 className="text-base font-medium text-gray-900">
-              共 {MOCK_COMMENTS.length} 条评论
-            </h2>
-          </div>
-          
-          <div className="space-y-4">
-            {MOCK_COMMENTS.map(comment => (
-              <div key={comment.id} className="px-4 py-2">
-                {/* 评论头部 */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-2">
-                    <span className="w-8 h-8 flex items-center justify-center text-lg bg-gray-50 rounded-full">
-                      {comment.author.avatar}
-                    </span>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900">
-                          {comment.author.name}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {comment.time}
-                        </span>
+        <div className="mt-6 mx-4">
+          <div className="border border-gray-100 rounded-xl shadow-sm bg-white">
+            <div className="px-4 py-4 border-b border-gray-100">
+              <h2 className="text-base font-medium text-gray-900">
+                共 {MOCK_COMMENTS.length} 条评论
+              </h2>
+            </div>
+            
+            <div className="divide-y divide-gray-100">
+              {MOCK_COMMENTS.map(comment => (
+                <div key={comment.id} className="px-4 py-4">
+                  {/* 评论头部 */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-2">
+                      <span className="w-8 h-8 flex items-center justify-center text-lg bg-gray-50 rounded-full">
+                        {comment.author.avatar}
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            {comment.author.name}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {comment.time}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-gray-700">
+                          {comment.content}
+                        </p>
                       </div>
-                      <p className="mt-1 text-sm text-gray-700">
-                        {comment.content}
-                      </p>
                     </div>
+                    
+                    <button
+                      onClick={() => handleLikeComment(comment.id)}
+                      className="flex items-center gap-1 p-1"
+                    >
+                      {likedComments.includes(comment.id) ? (
+                        <HeartSolidIcon className="w-4 h-4 text-red-500" />
+                      ) : (
+                        <HeartIcon className="w-4 h-4 text-gray-400" />
+                      )}
+                      <span className="text-xs text-gray-500">
+                        {comment.likes + (likedComments.includes(comment.id) ? 1 : 0)}
+                      </span>
+                    </button>
                   </div>
-                  
-                  <button
-                    onClick={() => handleLikeComment(comment.id)}
-                    className="flex items-center gap-1 p-1"
-                  >
-                    {likedComments.includes(comment.id) ? (
-                      <HeartSolidIcon className="w-4 h-4 text-red-500" />
-                    ) : (
-                      <HeartIcon className="w-4 h-4 text-gray-400" />
-                    )}
-                    <span className="text-xs text-gray-500">
-                      {comment.likes + (likedComments.includes(comment.id) ? 1 : 0)}
-                    </span>
-                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>

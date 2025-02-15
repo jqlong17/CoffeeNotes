@@ -46,14 +46,11 @@ export default function ContentCard({
 
   return (
     <div 
-      className="group flex flex-col justify-between rounded-2xl overflow-hidden bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 min-h-[300px]"
+      className="group flex flex-col rounded-2xl overflow-hidden bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 min-h-[300px]"
       onClick={onClick}
     >
       {/* 封面区域 */}
-      <div className="relative aspect-[4/3] bg-gray-50 mb-0">
-        {/* 空白背景 */}
-        <div className="absolute inset-0 bg-white" />
-        
+      <div className="relative aspect-[3/4]">
         {/* 内容容器 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
           {/* Emoji */}
@@ -63,7 +60,7 @@ export default function ContentCard({
           {/* 大字文本 */}
           <div className="relative inline-block max-w-[90%]">
             <span className={`absolute inset-0 ${bgColor} -rotate-1 block`}></span>
-            <span className="relative text-xl font-medium text-gray-900 px-3 py-1 inline-block">
+            <span className="relative text-xl font-medium text-gray-900 px-3 py-1 inline-block whitespace-pre-line text-center">
               {image_content}
             </span>
           </div>
@@ -71,7 +68,7 @@ export default function ContentCard({
       </div>
 
       {/* 内容区域 */}
-      <div className="p-3 mt-0">
+      <div className="flex-1 px-3 py-2">
         {/* 标题 */}
         <h3 className="text-sm text-gray-900 leading-normal mb-2 line-clamp-2">
           {title}

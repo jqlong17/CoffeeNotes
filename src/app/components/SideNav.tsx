@@ -34,7 +34,7 @@ export default function SideNav() {
       <div className="mb-8">
         <Link href="/" className="flex items-center">
           <span className="text-2xl">☕️</span>
-          <span className="ml-2 text-xl font-semibold text-coffee-900">咖啡笔记</span>
+          <span className="ml-2 text-xl font-semibold text-coffee-900">CoffeeNotes</span>
         </Link>
       </div>
 
