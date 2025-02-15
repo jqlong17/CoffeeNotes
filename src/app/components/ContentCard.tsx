@@ -1,5 +1,16 @@
 import { HeartIcon } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid'
+import { useMemo } from 'react'
+
+// 背景颜色选项
+const BG_COLORS = [
+  'bg-yellow-100/80',  // 黄色
+  'bg-blue-100/80',    // 蓝色
+  'bg-green-100/80',   // 绿色
+  'bg-pink-100/80',    // 粉色
+  'bg-purple-100/80',  // 紫色
+  'bg-orange-100/80',  // 橙色
+]
 
 interface ContentCardProps {
   imageEmoji: string
@@ -25,6 +36,12 @@ export default function ContentCard({
   onLike,
   onClick,
 }: ContentCardProps) {
+  // 使用 useMemo 确保在重新渲染时保持相同的背景颜色
+  const bgColor = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * BG_COLORS.length)
+    return BG_COLORS[randomIndex]
+  }, [])
+
   return (
     <div 
       className="group flex flex-col rounded-2xl overflow-hidden bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100"
@@ -38,12 +55,12 @@ export default function ContentCard({
         {/* 内容容器 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
           {/* Emoji */}
-          <div className="text-[80px] leading-none mb-4 opacity-90">
+          <div className="text-[60px] leading-none mb-4 opacity-90">
             {imageEmoji}
           </div>
           {/* 大字文本 */}
           <div className="relative inline-block max-w-[90%]">
-            <span className="absolute inset-0 bg-yellow-100/80 -rotate-1 block"></span>
+            <span className={`absolute inset-0 ${bgColor} -rotate-1 block`}></span>
             <span className="relative text-xl font-medium text-gray-900 px-3 py-1 inline-block">
               {image_content}
             </span>
