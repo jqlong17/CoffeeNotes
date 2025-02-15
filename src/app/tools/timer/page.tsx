@@ -1,18 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { PlayIcon, PauseIcon, StopIcon } from '@heroicons/react/24/solid'
+import React, { useState, useEffect } from 'react'
+import { PlayIcon, PauseIcon, StopIcon, FlagIcon } from '@heroicons/react/24/solid'
 
-const presets = [
-  { name: '手冲咖啡', time: 180 }, // 3分钟
-  { name: '法压壶', time: 240 }, // 4分钟
-  { name: '冷萃', time: 43200 }, // 12小时
-]
+interface TimePoint {
+  segment: number
+  duration: number
+}
 
 export default function TimerPage() {
   const [time, setTime] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
-  const [selectedPreset, setSelectedPreset] = useState<number | null>(null)
+  const [timePoints, setTimePoints] = useState<TimePoint[]>([])
+  const [lastPointTime, setLastPointTime] = useState(0)
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -46,12 +46,21 @@ export default function TimerPage() {
   const handleStop = () => {
     setIsRunning(false)
     setTime(0)
-    setSelectedPreset(null)
+    setTimePoints([])
+    setLastPointTime(0)
   }
 
-  const handlePresetClick = (index: number) => {
-    setTime(0)
-    setSelectedPreset(index)
+  const handlePoint = () => {
+    if (!isRunning) return
+    
+    const duration = time - lastPointTime
+    const newPoint: TimePoint = {
+      segment: timePoints.length + 1,
+      duration
+    }
+    
+    setTimePoints([...timePoints, newPoint])
+    setLastPointTime(time)
   }
 
   return (
@@ -62,7 +71,7 @@ export default function TimerPage() {
             {formatTime(time)}
           </div>
 
-          <div className="mb-8 flex justify-center gap-4">
+          <div className="flex justify-center gap-4 mb-8">
             {isRunning ? (
               <button
                 onClick={handlePause}
@@ -84,24 +93,33 @@ export default function TimerPage() {
             >
               <StopIcon className="h-6 w-6" />
             </button>
+            <button
+              onClick={handlePoint}
+              disabled={!isRunning}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-coffee-100 text-coffee-600 hover:bg-coffee-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FlagIcon className="h-6 w-6" />
+            </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            {presets.map((preset, index) => (
-              <button
-                key={preset.name}
-                onClick={() => handlePresetClick(index)}
-                className={`rounded-lg border p-3 text-sm ${
-                  selectedPreset === index
-                    ? 'border-coffee-600 bg-coffee-50 text-coffee-900'
-                    : 'border-coffee-200 text-coffee-600 hover:border-coffee-300'
-                }`}
-              >
-                <div className="font-medium">{preset.name}</div>
-                <div className="mt-1 text-xs">{formatTime(preset.time)}</div>
-              </button>
-            ))}
-          </div>
+          {timePoints.length > 0 && (
+            <div className="border-t border-coffee-100 pt-6">
+              <div className="grid grid-cols-2 gap-4 text-sm text-coffee-600">
+                <div className="text-left font-medium">段数</div>
+                <div className="text-right font-medium">用时</div>
+                {timePoints.map((point) => (
+                  <React.Fragment key={point.segment}>
+                    <div className="text-left border-b border-coffee-50 py-2">
+                      第 {point.segment} 段
+                    </div>
+                    <div className="text-right border-b border-coffee-50 py-2">
+                      {formatTime(point.duration)}
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

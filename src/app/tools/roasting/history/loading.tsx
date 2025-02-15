@@ -1,6 +1,3 @@
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
-import Link from 'next/link'
-
 export default function Loading() {
   return (
     <div className="min-h-screen bg-white">
