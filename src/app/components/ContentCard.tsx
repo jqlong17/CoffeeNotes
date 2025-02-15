@@ -50,7 +50,7 @@ export default function ContentCard({
       onClick={onClick}
     >
       {/* 封面区域 */}
-      <div className="relative aspect-[9/10]">
+      <div className="relative aspect-[3/4]">
         {/* 内容容器 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
           {/* Emoji */}
