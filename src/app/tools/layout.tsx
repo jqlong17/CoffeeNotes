@@ -1,3 +1,5 @@
+'use client'
+
 export default function ToolsLayout({
   children,
 }: {
@@ -5,7 +7,7 @@ export default function ToolsLayout({
 }) {
   return (
     <div>
-      <div className="mb-2">
+      <div className="mb-6">
         <h1 className="text-xl font-semibold text-coffee-900">工具箱</h1>
       </div>
       {children}
