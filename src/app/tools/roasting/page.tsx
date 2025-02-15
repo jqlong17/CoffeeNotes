@@ -2,13 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import {
-  ChartBarIcon,
-  ClipboardIcon,
-  StarIcon,
   PlusIcon,
   DocumentCheckIcon,
-  ClockIcon,
-  ArrowLeftIcon,
 } from '@heroicons/react/24/outline'
 import type { RoastingFormData, WeightLossPoint, TemperaturePoint, RoastingAssessment } from './types'
 import { PROCESS_OPTIONS, ROAST_LEVEL_OPTIONS, ROASTING_METHOD_OPTIONS } from './types'
@@ -19,7 +14,6 @@ import Dialog from '@/app/components/Dialog'
 import { roastingService } from './services/roastingService'
 import { formatDateTimeForInput } from './utils/dateUtils'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 // 初始状态
 const getInitialState = () => ({
@@ -62,7 +56,6 @@ const getInitialState = () => ({
 })
 
 export default function RoastingPage() {
-  const router = useRouter()
   const [activeTab, setActiveTab] = useState('form') // 'form' | 'curve' | 'result'
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
