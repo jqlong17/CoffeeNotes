@@ -36,8 +36,8 @@ export const roastingService = {
         .from('roasting_records')
         .insert([
           {
-            basic_info: record.basicInfo,
-            curve_data: record.curveData,
+            basic_info: record.basic_info,
+            curve_data: record.curve_data,
             assessment: record.assessment,
             created_at: now,
             updated_at: now,

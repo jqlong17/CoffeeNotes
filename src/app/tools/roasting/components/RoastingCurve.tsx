@@ -10,7 +10,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   Legend,
 } from 'recharts'
 import type { WeightLossPoint, TemperaturePoint, RecordMode, RoastingFormData } from '../types'
@@ -136,11 +135,19 @@ const RoastingCurve = ({
   }, [temperaturePoints]);
 
   // 自定义数据点渲染
-  const CustomDot = (props: any) => {
+  interface CustomDotProps {
+    cx?: number;
+    cy?: number;
+    payload?: {
+      tag?: string;
+    };
+  }
+
+  const CustomDot = (props: CustomDotProps) => {
     const { cx, cy, payload } = props;
     if (!cx || !cy) return null;
     
-    if (payload.tag) {
+    if (payload?.tag) {
       return (
         <g>
           <circle cx={cx} cy={cy} r={4} fill="#795548" />
@@ -160,38 +167,15 @@ const RoastingCurve = ({
     return <circle cx={cx} cy={cy} r={2} fill="#795548" />;
   };
 
-  // 处理记录重量数据点
-  const handleWeightRecord = () => {
-    if (!isRecording || !formData.weight || !currentWeight) return;
-    
-    // 使用当前重量差直接计算失重率
-    const newPoint: WeightLossPoint = {
-      time: currentTime,
-      weight: formData.weight - currentWeight, // 实际重量 = 初始重量 - 重量差
-      lossRate: (currentWeight / formData.weight) * 100, // 失重率 = 重量差/初始重量 * 100
-      tag: currentTag === '自定义' ? customTag : currentTag || undefined
-    };
-    
-    onCurrentWeightChange(formData.weight - currentWeight);
-    onCurrentTagChange('');
-    onCustomTagChange('');
-  };
-
   // 处理记录按钮点击
   const handleRecordClick = () => {
     if (recordMode === 'weightLoss') {
       if (!currentWeight) return;
       if (currentWeight > formData.weight) {
-        alert('重量差不能大于初始重量');
+        alert('当前重量不能大于初始重量');
         return;
       }
-      // 直接使用输入的重量差记录数据点
-      const newPoint: WeightLossPoint = {
-        time: currentTime,
-        weight: currentWeight,
-        lossRate: (currentWeight / formData.weight) * 100,
-        tag: currentTag === '自定义' ? customTag : currentTag || undefined
-      };
+      onCurrentWeightChange(currentWeight);
       onRecord();
     } else {
       if (!currentTemperature) return;
