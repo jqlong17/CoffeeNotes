@@ -146,7 +146,7 @@ export default function RoastingHistoryPage() {
       >
         <div className="mt-2">
           <p className="text-sm text-gray-500">
-            确定要删除"{recordToDelete?.basic_info.beanName}"的烘焙记录吗？此操作无法撤销。
+            确定要删除&quot;{recordToDelete?.basic_info.beanName}&quot;的烘焙记录吗？此操作无法撤销。
           </p>
         </div>
         <div className="mt-4 flex justify-end gap-2">
