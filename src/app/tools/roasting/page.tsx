@@ -205,8 +205,8 @@ export default function RoastingPage() {
       setSaveMessage(null)
 
       const record = {
-        basicInfo: formData,
-        curveData: {
+        basic_info: formData,
+        curve_data: {
           weightLossPoints,
           temperaturePoints,
           targetLossRate
