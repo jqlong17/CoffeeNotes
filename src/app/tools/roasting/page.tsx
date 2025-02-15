@@ -288,13 +288,6 @@ export default function RoastingPage() {
                 <DocumentCheckIcon className="w-4 h-4" />
                 {isSaving ? '保存中...' : '保存'}
               </button>
-              <Link
-                href="/tools/roasting/history"
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-coffee-600 hover:text-coffee-700 hover:bg-coffee-50 rounded-md"
-              >
-                <ClockIcon className="w-4 h-4" />
-                历史
-              </Link>
             </div>
           </div>
         </div>
@@ -322,37 +315,40 @@ export default function RoastingPage() {
           <div className="mb-6 flex rounded-lg border border-coffee-200 bg-white p-1">
             <button
               onClick={() => setActiveTab('form')}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ${
+              className={`flex flex-1 items-center justify-center rounded-md px-4 py-2 text-sm font-medium ${
                 activeTab === 'form'
                   ? 'bg-coffee-600 text-white'
                   : 'text-coffee-600 hover:bg-coffee-50'
               }`}
             >
-              <ClipboardIcon className="h-5 w-5" />
               基础信息
             </button>
             <button
               onClick={() => setActiveTab('curve')}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ${
+              className={`flex flex-1 items-center justify-center rounded-md px-4 py-2 text-sm font-medium ${
                 activeTab === 'curve'
                   ? 'bg-coffee-600 text-white'
                   : 'text-coffee-600 hover:bg-coffee-50'
               }`}
             >
-              <ChartBarIcon className="h-5 w-5" />
               烘焙曲线
             </button>
             <button
               onClick={() => setActiveTab('result')}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ${
+              className={`flex flex-1 items-center justify-center rounded-md px-4 py-2 text-sm font-medium ${
                 activeTab === 'result'
                   ? 'bg-coffee-600 text-white'
                   : 'text-coffee-600 hover:bg-coffee-50'
               }`}
             >
-              <StarIcon className="h-5 w-5" />
               结果评估
             </button>
+            <Link
+              href="/tools/roasting/history"
+              className="flex flex-1 items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-coffee-600 hover:bg-coffee-50"
+            >
+              历史
+            </Link>
           </div>
 
           {/* 内容区域 */}
