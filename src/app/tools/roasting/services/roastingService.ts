@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { RoastingRecord } from '../types'
+import type { RoastingRecord, RoastingPoint } from '../types'
 
 // 自定义错误类
 export class AuthError extends Error {
@@ -40,7 +40,7 @@ export const roastingService = {
       const warnings = validateRecord(record)
       
       const now = new Date().toISOString()
-      console.log('正在保存数据:', {
+      console.error('正在保存数据:', {
         basic_info: record.basic_info,
         curve_data: record.curve_data,
         assessment: record.assessment
@@ -72,7 +72,7 @@ export const roastingService = {
         throw new Error('保存成功但未返回数据')
       }
 
-      console.log('保存成功:', data[0])
+      console.error('保存成功:', data[0])
       return {
         data: data[0],
         warnings: warnings.length > 0 ? warnings : undefined
@@ -209,6 +209,75 @@ export const roastingService = {
       }
       console.error('删除烘焙记录时出错:', error)
       throw error instanceof Error ? error : new Error('未知错误')
+    }
+  },
+
+  // 创建烘焙记录
+  async createRoastingRecord(record: Omit<RoastingRecord, 'id' | 'created_at'>) {
+    try {
+      const { data, error } = await supabase
+        .from('roasting_records')
+        .insert([record])
+        .select()
+        .single()
+
+      if (error) throw error
+      return { data, error: null }
+    } catch (error) {
+      console.error('创建烘焙记录失败:', error)
+      return { data: null, error }
+    }
+  },
+
+  // 更新烘焙记录
+  async updateRoastingRecord(id: string, record: Partial<RoastingRecord>) {
+    try {
+      const { data, error } = await supabase
+        .from('roasting_records')
+        .update(record)
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return { data, error: null }
+    } catch (error) {
+      console.error('更新烘焙记录失败:', error)
+      return { data: null, error }
+    }
+  },
+
+  // 添加烘焙点位
+  async addRoastingPoint(point: Omit<RoastingPoint, 'id' | 'created_at'>) {
+    try {
+      const { data, error } = await supabase
+        .from('roasting_points')
+        .insert([point])
+        .select()
+        .single()
+
+      if (error) throw error
+      return { data, error: null }
+    } catch (error) {
+      console.error('添加烘焙点位失败:', error)
+      return { data: null, error }
+    }
+  },
+
+  // 获取烘焙点位列表
+  async getRoastingPoints(recordId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('roasting_points')
+        .select('*')
+        .eq('record_id', recordId)
+        .order('created_at', { ascending: true })
+
+      if (error) throw error
+      return { data, error: null }
+    } catch (error) {
+      console.error('获取烘焙点位列表失败:', error)
+      return { data: null, error }
     }
   }
 } 

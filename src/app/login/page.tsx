@@ -23,19 +23,15 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
-    console.log('开始登录/注册流程:', { email, isSignUp })
 
     try {
       let signInResult;
       if (isSignUp) {
-        console.log('开始注册...')
-        const signUpResult = await authService.signUp(email, password)
-        console.log('注册结果:', signUpResult)
+        // 先注册
+        await authService.signUp(email, password)
         // 注册成功后自动登录
-        console.log('注册后开始自动登录...')
         signInResult = await authService.signIn(email, password)
       } else {
-        console.log('开始登录...')
         signInResult = await authService.signIn(email, password)
       }
 
@@ -43,11 +39,8 @@ export default function LoginPage() {
         throw new Error('登录成功但未获取到访问令牌')
       }
 
-      console.log('认证成功，准备跳转...')
-      
       // 获取重定向URL
       const redirectUrl = getRedirectUrl()
-      console.log('重定向到:', redirectUrl)
 
       // 将 token 信息保存到 cookie 中
       const tokenKey = 'sb-gxojxpnreheldhbtzedb-auth-token'
@@ -58,7 +51,6 @@ export default function LoginPage() {
         user: signInResult.user
       })
       document.cookie = `${tokenKey}=${encodeURIComponent(tokenValue)}; path=/; max-age=3600; SameSite=Lax`
-      console.log('Token 已保存到 cookie')
 
       // 等待一小段时间确保 token 被正确保存
       await new Promise(resolve => setTimeout(resolve, 100))
